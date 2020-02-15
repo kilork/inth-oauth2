@@ -7,14 +7,15 @@ pub use self::error::ClientError;
 
 use reqwest;
 use reqwest::header::{ACCEPT, CONTENT_TYPE};
-use serde_json::{self, Value};
+
+use serde_json::Value;
 use url::form_urlencoded::Serializer;
 use url::Url;
 
-use client::response::FromResponse;
-use error::OAuth2Error;
-use provider::Provider;
-use token::{Lifetime, Refresh, Token};
+use crate::client::response::FromResponse;
+use crate::error::OAuth2Error;
+use crate::provider::Provider;
+use crate::token::{Lifetime, Refresh, Token};
 
 /// OAuth 2.0 client.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -84,8 +85,7 @@ impl<P: Provider> Client<P> {
     ///     None,
     /// );
     /// ```
-    pub fn auth_uri(&self, scope: Option<&str>, state: Option<&str>) -> Url
-    {
+    pub fn auth_uri(&self, scope: Option<&str>, state: Option<&str>) -> Url {
         let mut uri = self.provider.auth_uri().clone();
 
         {
@@ -110,7 +110,7 @@ impl<P: Provider> Client<P> {
 
     fn post_token(
         &self,
-        http_client: &reqwest::Client,
+        http_client: &reqwest::blocking::Client,
         mut body: Serializer<String>,
     ) -> Result<Value, ClientError> {
         if self.provider.credentials_in_body() {
@@ -120,15 +120,22 @@ impl<P: Provider> Client<P> {
 
         let body = body.finish();
 
-        let mut response = http_client
+        self.post_token_string(http_client, body)
+    }
+
+    fn post_token_string(
+        &self,
+        http_client: &reqwest::blocking::Client,
+        body: String,
+    ) -> Result<Value, ClientError> {
+        let json = http_client
             .post(self.provider.token_uri().clone())
             .basic_auth(&self.client_id, Some(&self.client_secret))
             .header(ACCEPT, "application/json")
             .header(CONTENT_TYPE, "application/x-www-form-urlencoded")
             .body(body)
-            .send()?;
-
-        let json = serde_json::from_reader(&mut response)?;
+            .send()?
+            .json::<Value>()?;
 
         let error = OAuth2Error::from_response(&json);
 
@@ -144,7 +151,7 @@ impl<P: Provider> Client<P> {
     /// See [RFC 6749, section 4.1.3](http://tools.ietf.org/html/rfc6749#section-4.1.3).
     pub fn request_token(
         &self,
-        http_client: &reqwest::Client,
+        http_client: &reqwest::blocking::Client,
         code: &str,
     ) -> Result<P::Token, ClientError> {
         let mut body = Serializer::new(String::new());
@@ -161,13 +168,17 @@ impl<P: Provider> Client<P> {
     }
 }
 
-impl<P> Client<P> where P: Provider, P::Token: Token<Refresh> {
+impl<P> Client<P>
+where
+    P: Provider,
+    P::Token: Token<Refresh>,
+{
     /// Refreshes an access token.
     ///
     /// See [RFC 6749, section 6](http://tools.ietf.org/html/rfc6749#section-6).
     pub fn refresh_token(
         &self,
-        http_client: &reqwest::Client,
+        http_client: &reqwest::blocking::Client,
         token: P::Token,
         scope: Option<&str>,
     ) -> Result<P::Token, ClientError> {
@@ -187,7 +198,7 @@ impl<P> Client<P> where P: Provider, P::Token: Token<Refresh> {
     /// Ensures an access token is valid by refreshing it if necessary.
     pub fn ensure_token(
         &self,
-        http_client: &reqwest::Client,
+        http_client: &reqwest::blocking::Client,
         token: P::Token,
     ) -> Result<P::Token, ClientError> {
         if token.lifetime().expired() {
@@ -200,26 +211,30 @@ impl<P> Client<P> where P: Provider, P::Token: Token<Refresh> {
 
 #[cfg(test)]
 mod tests {
-    use url::Url;
-    use token::{Bearer, Static};
-    use provider::Provider;
     use super::Client;
+    use crate::provider::Provider;
+    use crate::token::{Bearer, Static};
+    use url::Url;
 
     struct Test {
         auth_uri: Url,
-        token_uri: Url
+        token_uri: Url,
     }
     impl Provider for Test {
         type Lifetime = Static;
         type Token = Bearer<Static>;
-        fn auth_uri(&self) -> &Url { &self.auth_uri }
-        fn token_uri(&self) -> &Url { &self.token_uri }
+        fn auth_uri(&self) -> &Url {
+            &self.auth_uri
+        }
+        fn token_uri(&self) -> &Url {
+            &self.token_uri
+        }
     }
     impl Test {
         fn new() -> Self {
             Test {
                 auth_uri: Url::parse("http://example.com/oauth2/auth").unwrap(),
-                token_uri: Url::parse("http://example.com/oauth2/token").unwrap()
+                token_uri: Url::parse("http://example.com/oauth2/token").unwrap(),
             }
         }
     }

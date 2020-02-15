@@ -2,7 +2,7 @@
 
 use url::Url;
 
-use token::{Token, Lifetime, Bearer, Static, Refresh};
+use crate::token::{Bearer, Lifetime, Refresh, Static, Token};
 
 /// OAuth 2.0 providers.
 pub trait Provider {
@@ -28,7 +28,9 @@ pub trait Provider {
     /// as part of the request body.
     ///
     /// See [RFC 6749, section 2.3.1](http://tools.ietf.org/html/rfc6749#section-2.3.1).
-    fn credentials_in_body(&self) -> bool { false }
+    fn credentials_in_body(&self) -> bool {
+        false
+    }
 }
 
 /// Google OAuth 2.0 providers.
@@ -36,9 +38,9 @@ pub trait Provider {
 /// See [Using OAuth 2.0 to Access Google
 /// APIs](https://developers.google.com/identity/protocols/OAuth2).
 pub mod google {
-    use url::Url;
-    use token::{Bearer, Expiring, Refresh};
     use super::Provider;
+    use crate::token::{Bearer, Expiring, Refresh};
+    use url::Url;
 
     /// Signals the server to return the authorization code by prompting the user to copy and
     /// paste.
@@ -56,8 +58,10 @@ pub mod google {
     pub const REDIRECT_URI_OOB_AUTO: &'static str = "urn:ietf:wg:oauth:2.0:oob:auto";
 
     lazy_static! {
-        static ref AUTH_URI: Url = Url::parse("https://accounts.google.com/o/oauth2/v2/auth").unwrap();
-        static ref TOKEN_URI: Url = Url::parse("https://www.googleapis.com/oauth2/v4/token").unwrap();
+        static ref AUTH_URI: Url =
+            Url::parse("https://accounts.google.com/o/oauth2/v2/auth").unwrap();
+        static ref TOKEN_URI: Url =
+            Url::parse("https://www.googleapis.com/oauth2/v4/token").unwrap();
     }
 
     /// Google OAuth 2.0 provider for web applications.
@@ -69,8 +73,12 @@ pub mod google {
     impl Provider for Web {
         type Lifetime = Expiring;
         type Token = Bearer<Expiring>;
-        fn auth_uri(&self) -> &Url { &AUTH_URI }
-        fn token_uri(&self) -> &Url { &TOKEN_URI }
+        fn auth_uri(&self) -> &Url {
+            &AUTH_URI
+        }
+        fn token_uri(&self) -> &Url {
+            &TOKEN_URI
+        }
     }
 
     /// Google OAuth 2.0 provider for installed applications.
@@ -82,14 +90,20 @@ pub mod google {
     impl Provider for Installed {
         type Lifetime = Refresh;
         type Token = Bearer<Refresh>;
-        fn auth_uri(&self) -> &Url { &AUTH_URI }
-        fn token_uri(&self) -> &Url { &TOKEN_URI }
+        fn auth_uri(&self) -> &Url {
+            &AUTH_URI
+        }
+        fn token_uri(&self) -> &Url {
+            &TOKEN_URI
+        }
     }
 }
 
 lazy_static! {
-    static ref GITHUB_AUTH_URI: Url = Url::parse("https://github.com/login/oauth/authorize").unwrap();
-    static ref GITHUB_TOKEN_URI: Url = Url::parse("https://github.com/login/oauth/access_token").unwrap();
+    static ref GITHUB_AUTH_URI: Url =
+        Url::parse("https://github.com/login/oauth/authorize").unwrap();
+    static ref GITHUB_TOKEN_URI: Url =
+        Url::parse("https://github.com/login/oauth/access_token").unwrap();
     static ref IMGUR_AUTH_URI: Url = Url::parse("https://api.imgur.com/oauth2/authorize").unwrap();
     static ref IMGUR_TOKEN_URI: Url = Url::parse("https://api.imgur.com/oauth2/token").unwrap();
 }
@@ -102,8 +116,12 @@ pub struct GitHub;
 impl Provider for GitHub {
     type Lifetime = Static;
     type Token = Bearer<Static>;
-    fn auth_uri(&self) -> &Url { &GITHUB_AUTH_URI }
-    fn token_uri(&self) -> &Url { &GITHUB_TOKEN_URI }
+    fn auth_uri(&self) -> &Url {
+        &GITHUB_AUTH_URI
+    }
+    fn token_uri(&self) -> &Url {
+        &GITHUB_TOKEN_URI
+    }
 }
 
 /// Imgur OAuth 2.0 provider.
@@ -114,8 +132,12 @@ pub struct Imgur;
 impl Provider for Imgur {
     type Lifetime = Refresh;
     type Token = Bearer<Refresh>;
-    fn auth_uri(&self) -> &Url { &IMGUR_AUTH_URI }
-    fn token_uri(&self) -> &Url { &IMGUR_TOKEN_URI }
+    fn auth_uri(&self) -> &Url {
+        &IMGUR_AUTH_URI
+    }
+    fn token_uri(&self) -> &Url {
+        &IMGUR_TOKEN_URI
+    }
 }
 
 #[test]

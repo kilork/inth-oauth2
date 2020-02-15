@@ -1,13 +1,15 @@
-extern crate reqwest;
 extern crate inth_oauth2;
+extern crate reqwest;
 extern crate url;
 
-use inth_oauth2::Client;
-use inth_oauth2::provider::*;
+use inth_oauth2::{
+    provider::{google, GitHub, Imgur},
+    Client,
+};
 use url::Url;
 
 fn assert_get_uri_ok(uri: Url) {
-    let response = reqwest::get(uri).unwrap();
+    let response = reqwest::blocking::get(uri).unwrap();
     assert_eq!(reqwest::StatusCode::OK, response.status());
 }
 

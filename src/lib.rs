@@ -66,7 +66,7 @@
 //! let mut code = String::new();
 //! io::stdin().read_line(&mut code).unwrap();
 //!
-//! let http = reqwest::Client::new();
+//! let http = reqwest::blocking::Client::new();
 //! let token = client.request_token(&http, code.trim()).unwrap();
 //! println!("{}", token.access_token());
 //! # }
@@ -81,7 +81,7 @@
 //! # use inth_oauth2::provider::google::Installed;
 //! # fn main() {
 //! # let client = Client::new(Installed, String::new(), String::new(), None);
-//! # let http = reqwest::Client::new();
+//! # let http = reqwest::blocking::Client::new();
 //! # let token = client.request_token(&http, "").unwrap();
 //! let token = client.refresh_token(&http, token, None).unwrap();
 //! # }
@@ -96,7 +96,7 @@
 //! # use inth_oauth2::provider::google::Installed;
 //! # fn main() {
 //! # let client = Client::new(Installed, String::new(), String::new(), None);
-//! # let http = reqwest::Client::new();
+//! # let http = reqwest::blocking::Client::new();
 //! # let mut token = client.request_token(&http, "").unwrap();
 //! // Refresh token only if it has expired.
 //! token = client.ensure_token(&http, token).unwrap();
@@ -114,7 +114,7 @@
 //!
 //! # fn main() {
 //! # let oauth_client = Client::new(Installed, String::new(), String::new(), None);
-//! # let http = reqwest::Client::new();
+//! # let http = reqwest::blocking::Client::new();
 //! # let token = oauth_client.request_token(&http, "").unwrap();
 //! let request = http.get("https://example.com/resource")
 //!     .bearer_auth(token.access_token())
@@ -133,7 +133,7 @@
 //! # use inth_oauth2::Client;
 //! # use inth_oauth2::provider::google::Installed;
 //! # fn main() {
-//! # let http = reqwest::Client::new();
+//! # let http = reqwest::blocking::Client::new();
 //! # let client = Client::new(Installed, String::new(), String::new(), None);
 //! # let token = client.request_token(&http, "").unwrap();
 //! let json = serde_json::to_string(&token).unwrap();
@@ -149,7 +149,7 @@
     unused_extern_crates,
     unused_import_braces,
     unused_qualifications,
-    variant_size_differences,
+    variant_size_differences
 )]
 
 #[macro_use]
@@ -158,15 +158,10 @@ extern crate lazy_static;
 #[macro_use]
 extern crate serde_derive;
 
-extern crate chrono;
-extern crate reqwest;
-extern crate serde_json;
-extern crate url;
-
-pub mod token;
-pub mod provider;
-pub mod error;
 pub mod client;
+pub mod error;
+pub mod provider;
+pub mod token;
 
-pub use token::{Token, Lifetime};
-pub use client::{Client, ClientError};
+pub use crate::client::{Client, ClientError};
+pub use crate::token::{Lifetime, Token};

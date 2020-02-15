@@ -5,7 +5,7 @@ use std::fmt;
 
 use serde_json::Value;
 
-use client::response::{FromResponse, ParseError};
+use crate::client::response::{FromResponse, ParseError};
 
 /// OAuth 2.0 error codes.
 ///
@@ -83,14 +83,17 @@ impl fmt::Display for OAuth2Error {
 }
 
 impl Error for OAuth2Error {
-    fn description(&self) -> &str { "OAuth 2.0 API error" }
+    fn description(&self) -> &str {
+        "OAuth 2.0 API error"
+    }
 }
 
 impl FromResponse for OAuth2Error {
     fn from_response(json: &Value) -> Result<Self, ParseError> {
         let obj = json.as_object().ok_or(ParseError::ExpectedType("object"))?;
 
-        let code = obj.get("error")
+        let code = obj
+            .get("error")
             .and_then(Value::as_str)
             .ok_or(ParseError::ExpectedFieldType("error", "string"))?;
         let description = obj.get("error_description").and_then(Value::as_str);
@@ -106,8 +109,8 @@ impl FromResponse for OAuth2Error {
 
 #[cfg(test)]
 mod tests {
-    use client::response::{FromResponse, ParseError};
     use super::{OAuth2Error, OAuth2ErrorCode};
+    use crate::client::response::{FromResponse, ParseError};
 
     #[test]
     fn from_response_empty() {

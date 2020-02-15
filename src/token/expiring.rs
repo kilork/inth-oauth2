@@ -1,8 +1,8 @@
-use chrono::{DateTime, Utc, Duration};
+use chrono::{DateTime, Duration, Utc};
 use serde_json::Value;
 
-use client::response::{FromResponse, ParseError};
-use token::Lifetime;
+use crate::client::response::{FromResponse, ParseError};
+use crate::token::Lifetime;
 
 /// An expiring token.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -12,11 +12,15 @@ pub struct Expiring {
 
 impl Expiring {
     /// Returns the expiry time of the access token.
-    pub fn expires(&self) -> &DateTime<Utc> { &self.expires }
+    pub fn expires(&self) -> &DateTime<Utc> {
+        &self.expires
+    }
 }
 
 impl Lifetime for Expiring {
-    fn expired(&self) -> bool { self.expires < Utc::now() }
+    fn expired(&self) -> bool {
+        self.expires < Utc::now()
+    }
 }
 
 impl FromResponse for Expiring {
@@ -27,7 +31,8 @@ impl FromResponse for Expiring {
             return Err(ParseError::UnexpectedField("refresh_token"));
         }
 
-        let expires_in = obj.get("expires_in")
+        let expires_in = obj
+            .get("expires_in")
             .and_then(Value::as_i64)
             .ok_or(ParseError::ExpectedFieldType("expires_in", "i64"))?;
 
@@ -39,10 +44,10 @@ impl FromResponse for Expiring {
 
 #[cfg(test)]
 mod tests {
-    use chrono::{Utc, Duration};
+    use chrono::{Duration, Utc};
 
-    use client::response::FromResponse;
     use super::Expiring;
+    use crate::client::response::FromResponse;
 
     #[test]
     fn from_response() {

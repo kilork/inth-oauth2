@@ -1,7 +1,7 @@
 use serde_json::Value;
 
-use client::response::{FromResponse, ParseError};
-use token::{Token, Lifetime};
+use crate::client::response::{FromResponse, ParseError};
+use crate::token::{Lifetime, Token};
 
 /// The bearer token type.
 ///
@@ -29,14 +29,16 @@ impl<L: Lifetime> Bearer<L> {
     fn from_response_and_lifetime(json: &Value, lifetime: L) -> Result<Self, ParseError> {
         let obj = json.as_object().ok_or(ParseError::ExpectedType("object"))?;
 
-        let token_type = obj.get("token_type")
+        let token_type = obj
+            .get("token_type")
             .and_then(Value::as_str)
             .ok_or(ParseError::ExpectedFieldType("token_type", "string"))?;
         if token_type != "Bearer" && token_type != "bearer" {
             return Err(ParseError::ExpectedFieldValue("token_type", "Bearer"));
         }
 
-        let access_token = obj.get("access_token")
+        let access_token = obj
+            .get("access_token")
             .and_then(Value::as_str)
             .ok_or(ParseError::ExpectedFieldType("access_token", "string"))?;
         let scope = obj.get("scope").and_then(Value::as_str);
@@ -63,11 +65,11 @@ impl<L: Lifetime> FromResponse for Bearer<L> {
 
 #[cfg(test)]
 mod tests {
-    use chrono::{Utc, Duration};
+    use chrono::{Duration, Utc};
 
-    use client::response::{FromResponse, ParseError};
-    use token::{Static, Refresh};
     use super::Bearer;
+    use crate::client::response::{FromResponse, ParseError};
+    use crate::token::{Refresh, Static};
 
     #[test]
     fn from_response_with_invalid_token_type() {
@@ -80,7 +82,9 @@ mod tests {
 
     #[test]
     fn from_response_capital_b() {
-        let json = r#"{"token_type":"Bearer","access_token":"aaaaaaaa"}"#.parse().unwrap();
+        let json = r#"{"token_type":"Bearer","access_token":"aaaaaaaa"}"#
+            .parse()
+            .unwrap();
         assert_eq!(
             Bearer {
                 access_token: String::from("aaaaaaaa"),
@@ -93,7 +97,9 @@ mod tests {
 
     #[test]
     fn from_response_little_b() {
-        let json = r#"{"token_type":"bearer","access_token":"aaaaaaaa"}"#.parse().unwrap();
+        let json = r#"{"token_type":"bearer","access_token":"aaaaaaaa"}"#
+            .parse()
+            .unwrap();
         assert_eq!(
             Bearer {
                 access_token: String::from("aaaaaaaa"),
@@ -128,7 +134,9 @@ mod tests {
                 "expires_in":3600,
                 "refresh_token":"bbbbbbbb"
             }
-        "#.parse().unwrap();
+        "#
+        .parse()
+        .unwrap();
         let bearer = Bearer::<Refresh>::from_response(&json).unwrap();
         assert_eq!("aaaaaaaa", bearer.access_token);
         assert_eq!(None, bearer.scope);
@@ -147,7 +155,9 @@ mod tests {
                 "expires_in":3600,
                 "refresh_token":"bbbbbbbb"
             }
-        "#.parse().unwrap();
+        "#
+        .parse()
+        .unwrap();
         let prev = Bearer::<Refresh>::from_response(&json).unwrap();
 
         let json = r#"
@@ -156,7 +166,9 @@ mod tests {
                 "access_token":"cccccccc",
                 "expires_in":3600
             }
-        "#.parse().unwrap();
+        "#
+        .parse()
+        .unwrap();
         let bearer = Bearer::<Refresh>::from_response_inherit(&json, &prev).unwrap();
         assert_eq!("cccccccc", bearer.access_token);
         assert_eq!(None, bearer.scope);

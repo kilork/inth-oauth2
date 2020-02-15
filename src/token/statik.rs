@@ -1,14 +1,16 @@
 use serde_json::Value;
 
-use client::response::{FromResponse, ParseError};
-use token::Lifetime;
+use crate::client::response::{FromResponse, ParseError};
+use crate::token::Lifetime;
 
 /// A static, non-expiring token.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Static;
 
 impl Lifetime for Static {
-    fn expired(&self) -> bool { false }
+    fn expired(&self) -> bool {
+        false
+    }
 }
 
 impl FromResponse for Static {
@@ -23,8 +25,8 @@ impl FromResponse for Static {
 
 #[cfg(test)]
 mod tests {
-    use client::response::{FromResponse, ParseError};
     use super::Static;
+    use crate::client::response::{FromResponse, ParseError};
 
     #[test]
     fn from_response() {

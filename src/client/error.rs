@@ -5,8 +5,8 @@ use reqwest;
 use serde_json;
 use url;
 
-use client::response::ParseError;
-use error::OAuth2Error;
+use crate::client::response::ParseError;
+use crate::error::OAuth2Error;
 
 /// Errors that can occur during authorization.
 #[derive(Debug)]
@@ -55,7 +55,7 @@ impl Error for ClientError {
         }
     }
 
-    fn cause(&self) -> Option<&Error> {
+    fn cause(&self) -> Option<&dyn Error> {
         match *self {
             ClientError::Io(ref err) => Some(err),
             ClientError::Url(ref err) => Some(err),
@@ -74,7 +74,7 @@ macro_rules! impl_from {
                 $v(err)
             }
         }
-    }
+    };
 }
 
 impl_from!(ClientError::Io, io::Error);
